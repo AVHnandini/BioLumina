@@ -1,0 +1,22 @@
+{
+  "nandiniajay193@gmail.com": {
+    "name": "AnalaVenkata Hemanandini",
+    "email": "nandiniajay193@gmail.com",
+    "password": "Nandu@1234",
+    "created_at": "2025-12-11T15:50:36.864781",
+    "email_notifications_enabled": true
+  },
+  "test@example.com": {
+    "name": "Test User",
+    "email": "test@example.com",
+    "password": "password123",
+    "created_at": "2025-12-11T15:54:13.250213",
+    "email_notifications_enabled": true
+  },
+  "testuser@example.com": {
+    "name": "John Doe",
+    "email": "testuser@example.com",
+    "password": "test123",
+    "created_at": "2025-12-11T16:03:40.239163"
+  }
+}

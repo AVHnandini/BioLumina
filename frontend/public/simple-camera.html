@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Camera - Desktop View</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .content {
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        /* STATUS MESSAGE */
+        .status-message {
+            padding: 15px 20px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            background: #f0f4ff;
+            color: #667eea;
+            font-size: 14px;
+            display: none;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .status-message.show {
+            display: block;
+        }
+
+        .status-message.success {
+            border-left-color: #4caf50;
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .status-message.error {
+            border-left-color: #f44336;
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* VIDEO SECTION */
+        .video-section {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .video-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .live-indicator {
+            display: none;
+            width: 12px;
+            height: 12px;
+            background: #ff4444;
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+            margin-left: auto;
+        }
+
+        .live-indicator.active {
+            display: block;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* VIDEO CONTAINER */
+        .video-container {
+            position: relative;
+            width: 100%;
+            background: #000;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 3px solid #667eea;
+            box-shadow: 0 8px 24px rgba(102, 126, 234, 0.25);
+            aspect-ratio: 16 / 9;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scaleX(-1);
+            background: #000;
+        }
+
+        .no-video-message {
+            position: absolute;
+            color: #999;
+            text-align: center;
+            font-size: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .no-video-message.hidden {
+            display: none;
+        }
+
+        /* BUTTON SECTION */
+        .button-section {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            flex: 1;
+            min-width: 200px;
+            padding: 16px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        button:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        button:active:not(:disabled) {
+            transform: translateY(-1px);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-danger {
+            background: #f44336;
+            color: white;
+            box-shadow: 0 4px 15px rgba(244, 67, 54, 0.3);
+        }
+
+        .btn-danger:hover:not(:disabled) {
+            box-shadow: 0 8px 25px rgba(244, 67, 54, 0.4);
+        }
+
+        .btn-success {
+            background: #4caf50;
+            color: white;
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+        }
+
+        .btn-success:hover:not(:disabled) {
+            box-shadow: 0 8px 25px rgba(76, 175, 80, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+            border: 1px solid #ddd;
+            box-shadow: none;
+        }
+
+        /* ACTIONS SECTION - Hidden until camera is active */
+        .actions-section {
+            display: none;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+        }
+
+        .actions-section.show {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .section-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* IMAGE PREVIEW */
+        .image-preview-container {
+            display: none;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 2px solid #ddd;
+            background: #f5f5f5;
+            aspect-ratio: 16 / 9;
+        }
+
+        .image-preview-container.show {
+            display: block;
+        }
+
+        .image-preview-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            background: white;
+        }
+
+        /* BASE64 SECTION */
+        .base64-container {
+            display: none;
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+        }
+
+        .base64-container.show {
+            display: block;
+        }
+
+        .base64-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #666;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .base64-text {
+            background: white;
+            padding: 12px;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+            font-family: monospace;
+            font-size: 10px;
+            color: #666;
+            max-height: 80px;
+            overflow-y: auto;
+            word-break: break-all;
+            margin-bottom: 10px;
+            line-height: 1.4;
+        }
+
+        .copy-button {
+            width: 100%;
+            padding: 10px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .copy-button:hover {
+            background: #764ba2;
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .content {
+                padding: 20px;
+            }
+
+            .video-container {
+                aspect-ratio: 4 / 3;
+            }
+
+            button {
+                min-width: 150px;
+                padding: 12px 16px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- HEADER -->
+        <div class="header">
+            <h1>📷 Live Camera Preview</h1>
+        </div>
+
+        <!-- CONTENT -->
+        <div class="content">
+            <!-- STATUS MESSAGE -->
+            <div id="statusMsg" class="status-message"></div>
+
+            <!-- VIDEO SECTION -->
+            <div class="video-section">
+                <div class="video-title">
+                    <span>🎥 Live Camera Feed</span>
+                    <div class="live-indicator" id="liveIndicator"></div>
+                </div>
+
+                <!-- VIDEO CONTAINER -->
+                <div class="video-container">
+                    <!-- Primary video element for live preview -->
+                    <video id="videoStream" playsinline muted autoplay style="display:none; width:100%; height:100%; object-fit:cover;" ></video>
+                    <!-- Fallback canvas for environments where <video> does not render frames reliably -->
+                    <canvas id="videoFallbackCanvas" style="display:none; width:100%; height:100%;"></canvas>
+                    <!-- Debug overlay for showing video metrics on the page -->
+                    <div id="videoDebug" style="position:absolute; right:12px; bottom:12px; background:rgba(0,0,0,0.6); color:white; padding:6px 8px; border-radius:6px; font-family:monospace; font-size:12px; display:none; z-index:10;"></div>
+                    <div class="no-video-message" id="noVideoMsg">
+                        <div>📷</div>
+                        <div>Click "Start Camera" to begin</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CAMERA DEVICE SELECT & BUTTONS -->
+            <div style="display:flex; gap:12px; align-items:center; margin-bottom: 6px;">
+                <select id="cameraSelect" style="min-width:260px; padding:8px; border-radius:6px; border:1px solid #ddd;"></select>
+                <button id="listDevicesBtn" class="btn-secondary" style="min-width:160px; padding: 12px 16px; border-radius:6px;">🔍 List Cameras</button>
+            </div>
+            <!-- BUTTONS -->
+            <div class="button-section">
+                <button id="startBtn" class="btn-primary" onclick="startCamera()">
+                    🎥 Start Camera
+                </button>
+                <button id="stopBtn" class="btn-danger" onclick="stopCamera()" style="display: none;">
+                    ⏹️ Stop Camera
+                </button>
+            </div>
+
+            <!-- CAPTURE & ACTIONS -->
+            <div class="actions-section" id="actionsSection">
+                <div class="section-title">📸 Capture Actions</div>
+                
+                <button class="btn-success" onclick="capturePhoto()">
+                    📸 Capture Photo
+                </button>
+
+                <!-- CAPTURED IMAGE PREVIEW -->
+                <div class="image-preview-container" id="imagePreview">
+                    <img id="capturedImg" alt="Captured photo">
+                </div>
+
+                <!-- BASE64 OUTPUT -->
+                <div class="base64-container" id="base64Container">
+                    <label class="base64-label">🔐 Base64 Data (for backend):</label>
+                    <div class="base64-text" id="base64Text"></div>
+                    <button class="copy-button" onclick="copyBase64()">📋 Copy to Clipboard</button>
+                </div>
+
+                <button class="btn-success" onclick="sendToBackend()" id="sendBtn" style="display: none;">
+                    🚀 Send to Backend
+                </button>
+
+                <button class="btn-primary" onclick="resetCapture()">
+                    🔄 Clear & Retake
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // STATE
+        let state = {
+            stream: null,
+            isActive: false,
+            capturedImage: null
+        };
+
+        const videoStream = document.getElementById('videoStream');
+        const noVideoMsg = document.getElementById('noVideoMsg');
+        const statusMsg = document.getElementById('statusMsg');
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const liveIndicator = document.getElementById('liveIndicator');
+        const actionsSection = document.getElementById('actionsSection');
+        const imagePreview = document.getElementById('imagePreview');
+        const capturedImg = document.getElementById('capturedImg');
+        const base64Container = document.getElementById('base64Container');
+        const base64Text = document.getElementById('base64Text');
+        const sendBtn = document.getElementById('sendBtn');
+        const cameraSelect = document.getElementById('cameraSelect');
+        const listDevicesBtn = document.getElementById('listDevicesBtn');
+
+        // SHOW STATUS MESSAGE
+        function showStatus(message, type = 'info') {
+            statusMsg.textContent = message;
+            statusMsg.className = `status-message show ${type}`;
+            
+            if (type === 'info') {
+                setTimeout(() => {
+                    statusMsg.classList.remove('show');
+                }, 3000);
+            }
+        }
+
+        // LIST DEVICE & SELECT
+        async function enumerateCameras() {
+            try {
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                const videoDevices = devices.filter(d => d.kind === 'videoinput');
+                cameraSelect.innerHTML = '';
+                videoDevices.forEach((d, idx) => {
+                    const opt = document.createElement('option');
+                    opt.value = d.deviceId || d.label || `camera-${idx}`;
+                    opt.textContent = d.label || `Camera ${idx + 1}`;
+                    cameraSelect.appendChild(opt);
+                });
+                if (videoDevices.length === 0) {
+                    showStatus('❌ No cameras detected', 'error');
+                } else {
+                    showStatus(`✅ ${videoDevices.length} camera(s) found`, 'success');
+                }
+            } catch (err) {
+                console.error('enumerateDevices error', err);
+                showStatus('❌ Failed to list cameras', 'error');
+            }
+        }
+
+        // Attach event listeners
+        listDevicesBtn.addEventListener('click', enumerateCameras);
+        cameraSelect.addEventListener('change', (e) => {
+            // If camera is active, restart with selection
+            if (state.isActive) {
+                stopCamera();
+                setTimeout(() => startCamera(), 300);
+            }
+        });
+
+        // START CAMERA
+        async function startCamera() {
+            try {
+                showStatus('Requesting camera access...', 'info');
+
+                const selectedDeviceId = cameraSelect.value;
+                let videoConstraints;
+                if (selectedDeviceId) {
+                    videoConstraints = { deviceId: { exact: selectedDeviceId }, width: { ideal: 1920 }, height: { ideal: 1080 } };
+                } else {
+                    videoConstraints = { facingMode: 'user', width: { ideal: 1920 }, height: { ideal: 1080 } };
+                }
+                const constraints = { video: videoConstraints, audio: false };
+
+                state.stream = await navigator.mediaDevices.getUserMedia(constraints);
+                videoStream.srcObject = state.stream;
+
+                // Add listeners that are more robust than relying solely on onloadedmetadata
+                const tryPlayVideo = async () => {
+                    try {
+                        videoStream.muted = true;
+                        videoStream.setAttribute('playsinline', '');
+                        await videoStream.play();
+                        console.log('Video playing');
+                        return true;
+                    } catch (err) {
+                        console.warn('Play error (retryable):', err);
+                        return false;
+                    }
+                };
+
+                videoStream.onloadedmetadata = async () => {
+                    console.log('Metadata loaded:', { w: videoStream.videoWidth, h: videoStream.videoHeight });
+                    // Attempt to play immediately; if blocked, show fallback suggestion
+                    const ok = await tryPlayVideo();
+                    if (!ok) {
+                        // Allow a gentle retry and enable click-to-play fallback
+                        setTimeout(async () => {
+                            const ok2 = await tryPlayVideo();
+                            if (!ok2) {
+                                showStatus('🔔 Click on the live preview to start the video playback (browser autoplay blocked)', 'info');
+                                // If still blocked, wire up click to play the video
+                                videoStream.addEventListener('click', async () => { try { await tryPlayVideo(); } catch (e) { console.error(e); } }, { once: true });
+                            }
+                        }, 500);
+                    }
+                    state.isActive = true;
+
+                    // UPDATE UI
+                    noVideoMsg.classList.add('hidden');
+                    startBtn.style.display = 'none';
+                    stopBtn.style.display = 'flex';
+                    liveIndicator.classList.add('active');
+                    actionsSection.classList.add('show');
+                        // Make sure video element visible and on top
+                            videoStream.style.display = 'block';
+                            videoStream.style.zIndex = 2;
+                        noVideoMsg.style.zIndex = 1;
+
+                        // If video dimensions are zero, keep checking and guide user
+                        const checkDims = setInterval(() => {
+                            if (videoStream.videoWidth && videoStream.videoHeight) {
+                                clearInterval(checkDims);
+                                console.log('Video dimensions:', videoStream.videoWidth, videoStream.videoHeight);
+                                // Show debug overlay
+                                const dbg = document.getElementById('videoDebug'); if (dbg) dbg.style.display = 'block';
+                            }
+                        }, 200);
+
+                        // Troubleshoot: if no frames after 3 seconds, show suggestion and start fallback draw loop
+                        setTimeout(async () => {
+                            if (!videoStream.videoWidth || !videoStream.videoHeight) {
+                                showStatus('❌ No video frames received. Trying fallback canvas display. Please select a different camera or click the preview if required.', 'error');
+                                // Attempt to draw frames to canvas via ImageCapture or video draw loop
+                                startFallbackCanvas();
+                            }
+                        }, 3000);
+                    videoStream.style.display = 'block';
+                    videoStream.style.zIndex = 2;
+                    noVideoMsg.style.zIndex = 1;
+
+                    showStatus('✅ Camera is ready! You can now capture photos', 'success');
+                    // Start debug overlay updates
+                    try { startDebugMetrics(); } catch (_) {}
+                    // When the video actually starts playing, ensure fallback is stopped and the video is visible
+                    videoStream.addEventListener('playing', () => {
+                        try { stopFallbackCanvas(); } catch (_) {}
+                        videoStream.style.display = 'block';
+                        console.log('Video is playing - stopping fallback canvas (if any)');
+                        const dbg = document.getElementById('videoDebug'); if (dbg) dbg.style.display = 'block';
+                    }, { once: true });
+                };
+
+            } catch (error) {
+                if (error.name === 'NotAllowedError') {
+                    showStatus('❌ Camera permission denied', 'error');
+                } else if (error.name === 'NotFoundError') {
+                    showStatus('❌ No camera found', 'error');
+                } else if (error.name === 'NotReadableError') {
+                    showStatus('❌ Camera is being used by another app', 'error');
+                } else {
+                    showStatus(`❌ Error: ${error.message}`, 'error');
+                }
+                console.error('Camera error:', error);
+            }
+        }
+
+        // STOP CAMERA
+        function stopCamera() {
+            if (state.stream) {
+                state.stream.getTracks().forEach(track => track.stop());
+                state.stream = null;
+            }
+
+            state.isActive = false;
+            videoStream.srcObject = null;
+            // stop and hide fallback canvas
+            try { stopFallbackCanvas(); } catch(_) {}
+
+            // UPDATE UI
+            noVideoMsg.classList.remove('hidden');
+            startBtn.style.display = 'flex';
+            stopBtn.style.display = 'none';
+            liveIndicator.classList.remove('active');
+
+            // stop debug overlay
+            try { stopDebugMetrics(); } catch (_) {}
+            showStatus('Camera stopped', 'info');
+        }
+
+        // FALLBACK: draw video into canvas loop or use ImageCapture
+        let fallbackRequestId = null;
+        let fallbackImageCapture = null;
+        function startFallbackCanvas() {
+            const canvas = document.getElementById('videoFallbackCanvas');
+            const ctx = canvas.getContext('2d');
+            // Show canvas
+            canvas.style.display = 'block';
+            canvas.width = videoStream.videoWidth || 1280;
+            canvas.height = videoStream.videoHeight || 720;
+            canvas.style.zIndex = 3;
+            // If ImageCapture available, try a single shot then fallback to loop
+            try {
+                const track = state.stream && state.stream.getVideoTracks && state.stream.getVideoTracks()[0];
+                if (track && 'ImageCapture' in window) {
+                    fallbackImageCapture = new ImageCapture(track);
+                    fallbackImageCapture.grabFrame().then(imageBitmap => {
+                        canvas.width = imageBitmap.width;
+                        canvas.height = imageBitmap.height;
+                        ctx.drawImage(imageBitmap, 0, 0, canvas.width, canvas.height);
+                    }).catch(err => {
+                        console.warn('ImageCapture.grabFrame failed', err);
+                    });
+                }
+            } catch (err) {
+                console.warn('ImageCapture not available or failed', err);
+            }
+
+            function drawLoop() {
+                try {
+                    if (videoStream && videoStream.readyState >= 2 && videoStream.videoWidth > 0 && videoStream.videoHeight > 0) {
+                        canvas.width = videoStream.videoWidth;
+                        canvas.height = videoStream.videoHeight;
+                        // Mirror if necessary (front camera)
+                        ctx.save();
+                        ctx.scale(-1, 1);
+                        ctx.drawImage(videoStream, -canvas.width, 0, canvas.width, canvas.height);
+                        ctx.restore();
+                    }
+                } catch (e) {
+                    console.error('Fallback draw error', e);
+                }
+                fallbackRequestId = requestAnimationFrame(drawLoop);
+            }
+            if (!fallbackRequestId) fallbackRequestId = requestAnimationFrame(drawLoop);
+        }
+
+        function stopFallbackCanvas() {
+            if (fallbackRequestId) {
+                cancelAnimationFrame(fallbackRequestId);
+                fallbackRequestId = null;
+            }
+            const canvas = document.getElementById('videoFallbackCanvas');
+            if (canvas) canvas.style.display = 'none';
+            fallbackImageCapture = null;
+        }
+
+        // CAPTURE PHOTO
+        function capturePhoto() {
+            if (!state.isActive) {
+                showStatus('❌ Camera is not active', 'error');
+                return;
+            }
+
+            try {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+
+                canvas.width = videoStream.videoWidth;
+                canvas.height = videoStream.videoHeight;
+
+                // MIRROR IMAGE (flip for front camera)
+                ctx.scale(-1, 1);
+                ctx.drawImage(videoStream, -canvas.width, 0);
+
+                // CONVERT TO BASE64
+                state.capturedImage = canvas.toDataURL('image/jpeg', 0.95);
+
+                // DISPLAY IMAGE
+                capturedImg.src = state.capturedImage;
+                imagePreview.classList.add('show');
+
+                // SHOW BASE64
+                const truncated = state.capturedImage.substring(0, 100) + '...';
+                base64Text.textContent = truncated;
+                base64Container.classList.add('show');
+
+                // SHOW SEND BUTTON
+                sendBtn.style.display = 'flex';
+
+                showStatus('✅ Photo captured successfully!', 'success');
+
+            } catch (error) {
+                showStatus(`❌ Capture error: ${error.message}`, 'error');
+                console.error('Capture error:', error);
+            }
+        }
+
+        // COPY BASE64
+        function copyBase64() {
+            if (!state.capturedImage) {
+                showStatus('❌ No image to copy', 'error');
+                return;
+            }
+
+            navigator.clipboard.writeText(state.capturedImage)
+                .then(() => {
+                    showStatus('✅ Base64 copied to clipboard!', 'success');
+                })
+                .catch(err => {
+                    showStatus('❌ Failed to copy', 'error');
+                    console.error(err);
+                });
+        }
+
+        // SEND TO BACKEND
+        async function sendToBackend() {
+            if (!state.capturedImage) {
+                showStatus('❌ No image to send', 'error');
+                return;
+            }
+
+            try {
+                sendBtn.disabled = true;
+                showStatus('📤 Sending image to backend...', 'info');
+
+                const response = await fetch('http://localhost:5000/api/medxplain/upload_base64', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        image: state.capturedImage,
+                        timestamp: new Date().toISOString()
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Server error: ${response.status}`);
+                }
+
+                const result = await response.json();
+                showStatus('✅ Image sent successfully!', 'success');
+                console.log('Backend response:', result);
+
+            } catch (error) {
+                showStatus(`❌ Error sending to backend: ${error.message}`, 'error');
+                console.error('Send error:', error);
+            } finally {
+                sendBtn.disabled = false;
+            }
+        }
+
+        // RESET CAPTURE
+        function resetCapture() {
+            state.capturedImage = null;
+            capturedImg.src = '';
+            imagePreview.classList.remove('show');
+            base64Container.classList.remove('show');
+            sendBtn.style.display = 'none';
+            showStatus('Ready to capture again', 'info');
+        }
+
+        // CLEANUP ON UNLOAD
+        window.addEventListener('beforeunload', () => {
+            if (state.stream) {
+                state.stream.getTracks().forEach(track => track.stop());
+            }
+        });
+
+        // Update debug overlay for video metrics
+        let debugInterval = null;
+        function startDebugMetrics() {
+            const dbg = document.getElementById('videoDebug');
+            if (!dbg) return;
+            dbg.style.display = 'block';
+            if (debugInterval) clearInterval(debugInterval);
+            debugInterval = setInterval(() => {
+                if (videoStream && videoStream.srcObject) {
+                    dbg.textContent = `w:${videoStream.videoWidth || 0} h:${videoStream.videoHeight || 0} ready:${videoStream.readyState}`;
+                } else {
+                    dbg.textContent = 'No stream';
+                }
+            }, 300);
+        }
+        function stopDebugMetrics() { if (debugInterval) clearInterval(debugInterval); debugInterval = null; const dbg = document.getElementById('videoDebug'); if (dbg) dbg.style.display = 'none'; }
+
+        console.log('✅ Simple Camera System Ready');
+        // Populate camera list initially
+        if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
+            enumerateCameras();
+        }
+    </script>
+</body>
+</html>

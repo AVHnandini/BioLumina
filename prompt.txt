@@ -1,0 +1,55 @@
+/*
+Project: SymptoTwin – AI Biomedical Health Twin
+Goal: Build a modern, responsive React website frontend with Flask backend for predicting health risks based on symptoms. Efficient, hackathon-ready code that runs smoothly.
+
+Requirements:
+
+Frontend (React):
+- Use React functional components with hooks.
+- Responsive layout with Tailwind CSS or Bootstrap.
+- Pages:
+  1. Landing page: Hero section, project title, Start Assessment button.
+  2. Assessment page: Form to input Age, Sex (radio), Symptoms (multi-select or checkboxes), Submit button.
+  3. Results page: Show predicted conditions with probability %.
+     - Elegant cards for each condition.
+     - Color-coded risk levels (Green: low, Yellow: medium, Red: high).
+     - Optional: Interactive bar chart using Chart.js or Recharts.
+- Include a header and footer.
+- Smooth animations for page transitions or card hover effects.
+- Form input validation.
+
+Backend (Flask):
+- API server in Python Flask.
+- Routes:
+  1. /api/predict: POST request, receives JSON {age, sex, symptoms[]}.
+     - Map symptoms to API-compatible evidence format.
+     - Call Infermedica API (or mock API if needed).
+     - Return top 5 predicted conditions with probabilities as JSON.
+  2. Optional: /api/simulate: POST request to simulate lifestyle changes and adjust probabilities.
+- Efficient: handle multiple requests quickly, avoid redundant calls.
+- Use separate utils.py for helper functions (symptom mapping, API call).
+
+Integration:
+- Frontend calls Flask API using Axios or Fetch.
+- Display results dynamically without page reload.
+- Use loading spinner during API call.
+- Handle errors gracefully.
+
+Folder structure suggestion:
+frontend/
+├─ src/
+│  ├─ components/
+│  │  ├─ Header.js
+│  │  ├─ Footer.js
+│  │  ├─ AssessmentForm.js
+│  │  ├─ ResultCard.js
+│  │  └─ ResultChart.js
+│  └─ App.js
+backend/
+├─ app.py
+├─ utils.py
+├─ requirements.txt
+
+Output: Fully working React frontend + Flask backend, integrated. Clean, efficient code with clear comments. Include responsive UI, loading spinner, error handling, and elegant charts for results. Code should run locally efficiently and ready for deployment.
+
+*/

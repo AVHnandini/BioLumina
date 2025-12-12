@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MedXplain - Camera Integration</title>
+    <style>
+        /* ============================================
+           GLOBAL STYLES
+           ============================================ */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+
+        /* ============================================
+           HEADER SECTION
+           ============================================ */
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .header p {
+            font-size: 14px;
+            opacity: 0.95;
+        }
+
+        /* ============================================
+           MAIN CONTENT AREA
+           ============================================ */
+        .content {
+            padding: 30px 20px;
+        }
+
+        /* ============================================
+           TABS NAVIGATION
+           ============================================ */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 12px 16px;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            color: #666;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        .tab-btn:hover {
+            color: #667eea;
+        }
+
+        .tab-btn.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* ============================================
+           CAMERA SECTION
+           ============================================ */
+        .camera-section {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Status Messages */
+        .status-message {
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            display: none;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-message.show {
+            display: flex;
+        }
+
+        .status-message.info {
+            background: #e3f2fd;
+            color: #1976d2;
+            border-left: 4px solid #1976d2;
+        }
+
+        .status-message.success {
+            background: #e8f5e9;
+            color: #388e3c;
+            border-left: 4px solid #388e3c;
+        }
+
+        .status-message.error {
+            background: #ffebee;
+            color: #c62828;
+            border-left: 4px solid #c62828;
+        }
+
+        .status-icon {
+            font-size: 18px;
+        }
+
+        /* Camera Preview Container */
+        .preview-container {
+            position: relative;
+            width: 100%;
+            background: #000;
+            border-radius: 12px;
+            overflow: hidden;
+            display: none;
+        }
+
+        .preview-container.show {
+            display: block;
+        }
+
+        /* Aspect Ratio Container (4:3) */
+        .aspect-ratio-box {
+            position: relative;
+            width: 100%;
+            padding-bottom: 75%;
+            background: #000;
+        }
+
+        /* Video Element - Live Camera Feed */
+        #cameraVideo {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scaleX(-1); /* Mirror effect for front camera */
+        }
+
+        /* Live Indicator Badge */
+        .live-indicator {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            background: #ff4444;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            z-index: 10;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .live-indicator .pulse {
+            width: 8px;
+            height: 8px;
+            background: white;
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        /* Focus Guide - Yellow Frame */
+        .focus-guide {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80%;
+            height: 70%;
+            border: 3px solid rgba(255, 193, 7, 0.7);
+            border-radius: 8px;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        /* Corner Markers */
+        .corner-marker {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(76, 175, 80, 0.9);
+            z-index: 5;
+        }
+
+        .corner-marker.top-left {
+            top: 15px;
+            left: 15px;
+            border-right: none;
+            border-bottom: none;
+        }
+
+        .corner-marker.top-right {
+            top: 15px;
+            right: 15px;
+            border-left: none;
+            border-bottom: none;
+        }
+
+        .corner-marker.bottom-left {
+            bottom: 15px;
+            left: 15px;
+            border-right: none;
+            border-top: none;
+        }
+
+        .corner-marker.bottom-right {
+            bottom: 15px;
+            right: 15px;
+            border-left: none;
+            border-top: none;
+        }
+
+        /* Hidden Canvas for Image Capture */
+        #captureCanvas {
+            display: none;
+        }
+
+        /* Captured Image Preview */
+        .image-preview {
+            width: 100%;
+            max-height: 400px;
+            border-radius: 12px;
+            object-fit: contain;
+            background: #f5f5f5;
+            display: none;
+        }
+
+        .image-preview.show {
+            display: block;
+        }
+
+        /* Instructions */
+        .instructions {
+            background: #f5f7fa;
+            padding: 16px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            font-size: 14px;
+            color: #555;
+            line-height: 1.6;
+        }
+
+        .instructions h3 {
+            color: #667eea;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .instructions ol {
+            margin-left: 20px;
+        }
+
+        .instructions li {
+            margin-bottom: 6px;
+        }
+
+        /* ============================================
+           BUTTON STYLES
+           ============================================ */
+        .button-group {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            flex: 1;
+            min-width: 120px;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        /* Primary Button */
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        /* Secondary Button */
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: #e0e0e0;
+        }
+
+        /* Danger Button */
+        .btn-danger {
+            background: #ff6b6b;
+            color: white;
+        }
+
+        .btn-danger:hover:not(:disabled) {
+            background: #ff5252;
+        }
+
+        /* Success Button */
+        .btn-success {
+            background: #4caf50;
+            color: white;
+        }
+
+        .btn-success:hover:not(:disabled) {
+            background: #45a049;
+        }
+
+        /* Disabled State */
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Loading State */
+        button.loading {
+            pointer-events: none;
+        }
+
+        /* ============================================
+           BASE64 OUTPUT SECTION
+           ============================================ */
+        .base64-output {
+            display: none;
+            background: #f5f5f5;
+            padding: 16px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+        }
+
+        .base64-output.show {
+            display: block;
+        }
+
+        .base64-output h3 {
+            color: #333;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .base64-text {
+            background: white;
+            padding: 12px;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 11px;
+            word-break: break-all;
+            max-height: 150px;
+            overflow-y: auto;
+            color: #666;
+            line-height: 1.4;
+        }
+
+        .copy-btn {
+            margin-top: 10px;
+            width: 100%;
+            padding: 10px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .copy-btn:hover {
+            background: #764ba2;
+        }
+
+        /* ============================================
+           RESPONSIVE DESIGN
+           ============================================ */
+        @media (max-width: 600px) {
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .content {
+                padding: 20px 16px;
+            }
+
+            .tabs {
+                gap: 5px;
+            }
+
+            .tab-btn {
+                font-size: 12px;
+                padding: 10px 12px;
+            }
+
+            button {
+                min-width: 100px;
+                padding: 10px 16px;
+                font-size: 13px;
+            }
+
+            .focus-guide {
+                width: 90%;
+                height: 60%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>📋 MedXplain</h1>
+            <p>Biomedical Image Capture & Analysis</p>
+        </div>
+
+        <!-- Main Content -->
+        <div class="content">
+            <!-- Tab Navigation -->
+            <div class="tabs">
+                <button class="tab-btn active" data-tab="camera">📷 Camera</button>
+                <button class="tab-btn" data-tab="info">ℹ️ Info</button>
+            </div>
+
+            <!-- Camera Tab -->
+            <div id="camera" class="tab-content active">
+                <div class="camera-section">
+                    <!-- Instructions -->
+                    <div class="instructions">
+                        <h3>📸 How to Use</h3>
+                        <ol>
+                            <li>Click <strong>"Start Camera"</strong> to access your device camera</li>
+                            <li>Position your prescription in the yellow frame</li>
+                            <li>Click <strong>"Capture Photo"</strong> to take a snapshot</li>
+                            <li>Review and click <strong>"Send to Backend"</strong> for analysis</li>
+                        </ol>
+                    </div>
+
+                    <!-- Status Messages -->
+                    <div id="statusMessage" class="status-message">
+                        <span class="status-icon">ℹ️</span>
+                        <span id="statusText">Loading...</span>
+                    </div>
+
+                    <!-- Camera Preview -->
+                    <div id="previewContainer" class="preview-container">
+                        <div class="aspect-ratio-box">
+                            <video id="cameraVideo" autoplay playsinline muted></video>
+                            <div class="live-indicator">
+                                <div class="pulse"></div>
+                                LIVE
+                            </div>
+                            <div class="focus-guide"></div>
+                            <div class="corner-marker top-left"></div>
+                            <div class="corner-marker top-right"></div>
+                            <div class="corner-marker bottom-left"></div>
+                            <div class="corner-marker bottom-right"></div>
+                        </div>
+                    </div>
+
+                    <!-- Captured Image Preview -->
+                    <img id="capturedImage" class="image-preview" alt="Captured image">
+
+                    <!-- Hidden Canvas for Capture -->
+                    <canvas id="captureCanvas"></canvas>
+
+                    <!-- Control Buttons -->
+                    <div class="button-group" id="buttonGroup">
+                        <button id="startCameraBtn" class="btn-primary">
+                            📷 Start Camera
+                        </button>
+                    </div>
+
+                    <!-- Base64 Output Section -->
+                    <div id="base64Output" class="base64-output">
+                        <h3>🔐 Base64 Encoded Image</h3>
+                        <div class="base64-text" id="base64Text"></div>
+                        <button class="copy-btn" id="copyBase64Btn">
+                            📋 Copy Base64
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Info Tab -->
+            <div id="info" class="tab-content">
+                <div style="padding: 20px; text-align: center; color: #666;">
+                    <h3 style="color: #667eea; margin-bottom: 15px;">📚 About Camera Integration</h3>
+                    <p style="margin-bottom: 12px;">
+                        <strong>Pure JavaScript Camera Module</strong><br>
+                        No frameworks required - uses native Web APIs
+                    </p>
+                    <p style="margin-bottom: 12px;">
+                        <strong>Features:</strong><br>
+                        ✅ Real-time camera preview<br>
+                        ✅ Photo capture with canvas<br>
+                        ✅ Base64 encoding<br>
+                        ✅ Error handling<br>
+                        ✅ Mobile-friendly UI
+                    </p>
+                    <p style="margin-bottom: 12px;">
+                        <strong>Technologies:</strong><br>
+                        getUserMedia API | Canvas API | FileReader API
+                    </p>
+                    <p style="margin-top: 20px; font-size: 12px; color: #999;">
+                        Compatible with modern browsers (Chrome, Firefox, Safari, Edge)
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        /**
+         * ============================================
+         * MEDXPLAIN CAMERA MODULE
+         * Biomedical Image Capture & Base64 Encoding
+         * ============================================
+         */
+
+        // ============================================
+        // STATE VARIABLES
+        // ============================================
+        let mediaStream = null;
+        let currentBase64 = null;
+        let isCameraActive = false;
+
+        // ============================================
+        // DOM ELEMENTS
+        // ============================================
+        const videoElement = document.getElementById('cameraVideo');
+        const canvasElement = document.getElementById('captureCanvas');
+        const previewContainer = document.getElementById('previewContainer');
+        const capturedImage = document.getElementById('capturedImage');
+        const statusMessage = document.getElementById('statusMessage');
+        const statusText = document.getElementById('statusText');
+        const startCameraBtn = document.getElementById('startCameraBtn');
+        const buttonGroup = document.getElementById('buttonGroup');
+        const base64Output = document.getElementById('base64Output');
+        const base64Text = document.getElementById('base64Text');
+        const copyBase64Btn = document.getElementById('copyBase64Btn');
+
+        // ============================================
+        // UTILITY FUNCTIONS
+        // ============================================
+
+        /**
+         * Show status message to user
+         * @param {string} message - The message text
+         * @param {string} type - 'info', 'success', or 'error'
+         */
+        function showStatus(message, type = 'info') {
+            statusMessage.className = `status-message show ${type}`;
+            statusText.textContent = message;
+
+            // Auto-hide info messages after 3 seconds
+            if (type === 'info') {
+                setTimeout(() => {
+                    statusMessage.classList.remove('show');
+                }, 3000);
+            }
+        }
+
+        /**
+         * Update button group based on camera state
+         */
+        function updateButtonGroup() {
+            buttonGroup.innerHTML = '';
+
+            if (!isCameraActive && !currentBase64) {
+                // Initial state - show start camera button
+                const btn = document.createElement('button');
+                btn.className = 'btn-primary';
+                btn.innerHTML = '📷 Start Camera';
+                btn.onclick = startCamera;
+                buttonGroup.appendChild(btn);
+            } else if (isCameraActive) {
+                // Camera active - show capture and cancel buttons
+                const captureBtn = document.createElement('button');
+                captureBtn.className = 'btn-success';
+                captureBtn.innerHTML = '📸 Capture Photo';
+                captureBtn.onclick = capturePhoto;
+                buttonGroup.appendChild(captureBtn);
+
+                const cancelBtn = document.createElement('button');
+                cancelBtn.className = 'btn-danger';
+                cancelBtn.innerHTML = '✖️ Stop Camera';
+                cancelBtn.onclick = stopCamera;
+                buttonGroup.appendChild(cancelBtn);
+            } else if (currentBase64) {
+                // Photo captured - show retake and send buttons
+                const retakeBtn = document.createElement('button');
+                retakeBtn.className = 'btn-secondary';
+                retakeBtn.innerHTML = '🔄 Retake Photo';
+                retakeBtn.onclick = startCamera;
+                buttonGroup.appendChild(retakeBtn);
+
+                const sendBtn = document.createElement('button');
+                sendBtn.className = 'btn-primary';
+                sendBtn.innerHTML = '🚀 Send to Backend';
+                sendBtn.onclick = sendToBackend;
+                buttonGroup.appendChild(sendBtn);
+            }
+        }
+
+        // ============================================
+        // CAMERA FUNCTIONS
+        // ============================================
+
+        /**
+         * START CAMERA
+         * Request access to device camera and display live preview
+         */
+        async function startCamera() {
+            try {
+                showStatus('Requesting camera access...', 'info');
+
+                // Request camera with specific constraints
+                const constraints = {
+                    video: {
+                        facingMode: 'user', // Front camera on mobile, default on desktop
+                        width: { ideal: 1280 },
+                        height: { ideal: 960 }
+                    },
+                    audio: false // We don't need audio for biomedical image capture
+                };
+
+                // Get media stream from device
+                mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
+
+                // Attach stream to video element
+                videoElement.srcObject = mediaStream;
+
+                // Wait for video to load before updating UI
+                videoElement.onloadedmetadata = () => {
+                    videoElement.play().catch(err => console.error('Play error:', err));
+                    isCameraActive = true;
+                    previewContainer.classList.add('show');
+                    updateButtonGroup();
+                    showStatus('📷 Camera is ready! Position your prescription in the frame.', 'success');
+                };
+
+            } catch (error) {
+                // Handle different error types
+                if (error.name === 'NotAllowedError') {
+                    showStatus('❌ Camera permission denied. Please enable camera access in your browser settings.', 'error');
+                } else if (error.name === 'NotFoundError') {
+                    showStatus('❌ No camera device found. Please check your device has a camera.', 'error');
+                } else if (error.name === 'NotReadableError') {
+                    showStatus('❌ Camera is in use by another application. Please close it and try again.', 'error');
+                } else {
+                    showStatus(`❌ Error accessing camera: ${error.message}`, 'error');
+                }
+                console.error('Camera error:', error);
+            }
+        }
+
+        /**
+         * STOP CAMERA
+         * Stop the media stream and hide preview
+         */
+        function stopCamera() {
+            if (mediaStream) {
+                // Stop all tracks in the stream
+                mediaStream.getTracks().forEach(track => track.stop());
+                mediaStream = null;
+            }
+
+            isCameraActive = false;
+            videoElement.srcObject = null;
+            previewContainer.classList.remove('show');
+            updateButtonGroup();
+            showStatus('Camera stopped', 'info');
+        }
+
+        /**
+         * CAPTURE PHOTO
+         * Capture the current video frame and convert to Base64
+         */
+        function capturePhoto() {
+            try {
+                // Get canvas context
+                const context = canvasElement.getContext('2d');
+
+                // Set canvas dimensions to match video
+                canvasElement.width = videoElement.videoWidth;
+                canvasElement.height = videoElement.videoHeight;
+
+                // Draw current video frame to canvas (mirror it back to normal)
+                context.scale(-1, 1);
+                context.drawImage(videoElement, -canvasElement.width, 0);
+
+                // Convert canvas to Base64 string
+                currentBase64 = canvasElement.toDataURL('image/jpeg', 0.95);
+
+                // Display captured image
+                capturedImage.src = currentBase64;
+                capturedImage.classList.add('show');
+
+                // Stop camera and show captured image
+                stopCamera();
+
+                // Display Base64 output
+                displayBase64Output();
+
+                // Update button group
+                updateButtonGroup();
+
+                showStatus('✅ Photo captured successfully! Ready to analyze.', 'success');
+
+            } catch (error) {
+                showStatus(`❌ Error capturing photo: ${error.message}`, 'error');
+                console.error('Capture error:', error);
+            }
+        }
+
+        /**
+         * DISPLAY BASE64 OUTPUT
+         * Show the Base64 encoded image data
+         */
+        function displayBase64Output() {
+            if (currentBase64) {
+                // Truncate for display (first 100 chars + "..." + last 50 chars)
+                const truncated = currentBase64.substring(0, 100) + '...' + 
+                                 currentBase64.substring(currentBase64.length - 50);
+                base64Text.textContent = truncated;
+                base64Output.classList.add('show');
+            }
+        }
+
+        /**
+         * SEND TO BACKEND
+         * Send Base64 image to backend API for biomedical analysis
+         */
+        async function sendToBackend() {
+            if (!currentBase64) {
+                showStatus('❌ No image to send', 'error');
+                return;
+            }
+
+            try {
+                showStatus('📤 Sending image to backend...', 'info');
+
+                // Prepare payload
+                const payload = {
+                    image: currentBase64,
+                    timestamp: new Date().toISOString(),
+                    source: 'camera'
+                };
+
+                // Send to backend API
+                const response = await fetch('http://localhost:5000/api/medxplain/upload_base64', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Server returned ${response.status}`);
+                }
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showStatus('✅ Image sent successfully! Analysis complete.', 'success');
+                    console.log('Backend response:', result);
+                    // You can display results here
+                    alert('Analysis Result:\n' + JSON.stringify(result.analysis, null, 2));
+                } else {
+                    throw new Error(result.error || 'Unknown error');
+                }
+
+            } catch (error) {
+                showStatus(`❌ Error sending to backend: ${error.message}`, 'error');
+                console.error('Backend error:', error);
+            }
+        }
+
+        /**
+         * COPY BASE64 TO CLIPBOARD
+         * Copy the full Base64 string to clipboard
+         */
+        function copyBase64ToClipboard() {
+            if (!currentBase64) {
+                showStatus('❌ No Base64 to copy', 'error');
+                return;
+            }
+
+            navigator.clipboard.writeText(currentBase64)
+                .then(() => {
+                    showStatus('✅ Base64 copied to clipboard!', 'success');
+                })
+                .catch(err => {
+                    showStatus('❌ Failed to copy to clipboard', 'error');
+                    console.error('Copy error:', err);
+                });
+        }
+
+        /**
+         * MAIN REUSABLE FUNCTION
+         * captureImage() - Returns Promise that resolves to Base64 string
+         * Can be called from anywhere in your application
+         */
+        async function captureImage() {
+            return new Promise(async (resolve, reject) => {
+                try {
+                    // Get camera access
+                    const constraints = {
+                        video: {
+                            facingMode: 'user',
+                            width: { ideal: 1280 },
+                            height: { ideal: 960 }
+                        },
+                        audio: false
+                    };
+
+                    const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                    const video = document.createElement('video');
+                    video.srcObject = stream;
+
+                    // Wait for video to load
+                    video.onloadedmetadata = () => {
+                        video.play();
+
+                        // Give user 3 seconds to position camera, then capture
+                        setTimeout(() => {
+                            const canvas = document.createElement('canvas');
+                            const context = canvas.getContext('2d');
+                            canvas.width = video.videoWidth;
+                            canvas.height = video.videoHeight;
+                            context.scale(-1, 1);
+                            context.drawImage(video, -canvas.width, 0);
+
+                            const base64 = canvas.toDataURL('image/jpeg', 0.95);
+
+                            // Stop all tracks
+                            stream.getTracks().forEach(track => track.stop());
+
+                            resolve(base64);
+                        }, 3000);
+                    };
+
+                    video.onerror = () => {
+                        stream.getTracks().forEach(track => track.stop());
+                        reject(new Error('Failed to load video'));
+                    };
+
+                } catch (error) {
+                    reject(error);
+                }
+            });
+        }
+
+        // ============================================
+        // EVENT LISTENERS
+        // ============================================
+
+        // Tab switching
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const tabName = btn.dataset.tab;
+
+                // Update active tab button
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+
+                // Update active tab content
+                document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+                document.getElementById(tabName).classList.add('active');
+            });
+        });
+
+        // Copy Base64 button
+        copyBase64Btn.addEventListener('click', copyBase64ToClipboard);
+
+        // Initialize button group
+        updateButtonGroup();
+
+        // ============================================
+        // WINDOW CLEANUP
+        // ============================================
+        window.addEventListener('beforeunload', () => {
+            if (mediaStream) {
+                mediaStream.getTracks().forEach(track => track.stop());
+            }
+        });
+
+        // ============================================
+        // EXPORT FUNCTIONS FOR EXTERNAL USE
+        // ============================================
+        window.MedXplainCamera = {
+            captureImage: captureImage,
+            startCamera: startCamera,
+            stopCamera: stopCamera,
+            getBase64: () => currentBase64
+        };
+
+        console.log('✅ MedXplain Camera Module Ready');
+        console.log('Usage: MedXplainCamera.captureImage() returns Promise<base64>');
+    </script>
+</body>
+</html>

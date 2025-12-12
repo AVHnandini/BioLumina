@@ -1,0 +1,48 @@
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+/* Global Styles */
+body {
+  @apply antialiased;
+  background: linear-gradient(135deg, #f0f7ff 0%, #e8f4f8 100%);
+  min-height: 100vh;
+}
+
+/* Smooth Transitions */
+* {
+  @apply transition-all duration-300 ease-in-out;
+}
+
+/* Custom Utilities */
+.btn-primary {
+  @apply px-6 py-3 bg-gradient-to-r from-primary-600 to-teal-600 text-white rounded-lg font-semibold shadow-soft hover:shadow-medium transform hover:scale-105;
+}
+
+.btn-secondary {
+  @apply px-6 py-3 bg-white text-primary-600 border-2 border-primary-600 rounded-lg font-semibold shadow-soft hover:bg-primary-50;
+}
+
+.card {
+  @apply bg-white rounded-xl shadow-soft p-6 hover:shadow-medium;
+}
+
+.input-field {
+  @apply w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white;
+}
+
+.badge {
+  @apply inline-block px-3 py-1 rounded-full text-sm font-semibold;
+}
+
+.badge-low {
+  @apply badge bg-health-low/20 text-health-low;
+}
+
+.badge-medium {
+  @apply badge bg-health-medium/20 text-health-medium;
+}
+
+.badge-high {
+  @apply badge bg-health-high/20 text-health-high;
+}
