@@ -3,6 +3,7 @@ SymptoTwin Backend - Flask API for Health Assessment & Condition Prediction
 """
 
 from flask import Flask, request, jsonify
+from dotenv import load_dotenv
 from flask_cors import CORS
 from flask_mail import Mail, Message
 import logging
@@ -12,6 +13,7 @@ from utils import predict_conditions, get_condition_suggestions
 from memorymate_routes import memorymate_bp
 from medxplain_routes import medxplain_bp
 from fakemed_routes import fakemed_bp
+from ai_routes import ai_bp
 
 # Configure logging
 logging.basicConfig(
@@ -23,6 +25,9 @@ logger = logging.getLogger(__name__)
 # Initialize Flask app
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
+
+# Load environment variables from .env when present
+load_dotenv()
 
 # Configure Flask-Mail for email notifications
 app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER', 'smtp.gmail.com')
@@ -38,6 +43,7 @@ mail = Mail(app)
 app.register_blueprint(memorymate_bp)
 app.register_blueprint(medxplain_bp)
 app.register_blueprint(fakemed_bp)
+app.register_blueprint(ai_bp)
 
 # Make mail available to blueprints
 app.mail = mail

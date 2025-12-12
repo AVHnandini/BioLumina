@@ -76,16 +76,21 @@ def upload_prescription():
         
         # Extract text (OCR)
         extracted_text = extract_text_from_image(file_content)
-        
+
         # Get AI explanation
         ai_response = get_ai_explanation(extracted_text)
-        
-        return jsonify({
-            'success': True,
+
+        analysis = {
             'extracted_text': extracted_text,
             'simplified_meaning': ai_response.get('simplified_meaning'),
-            'medicine_instructions': ai_response.get('medicine_instructions'),
-            'dosage_guide': ai_response.get('dosage_guide'),
+            'medicine_instructions': ai_response.get('medicine_instructions', []),
+            'dosage_guide': ai_response.get('dosage_guide', ''),
+            'warnings': ai_response.get('warnings', [])
+        }
+
+        return jsonify({
+            'success': True,
+            'analysis': analysis,
             'filename': file.filename
         }), 200
     except Exception as e:
@@ -104,13 +109,19 @@ def analyze_text():
         
         # Get AI explanation
         ai_response = get_ai_explanation(text)
-        
+
+        analysis = {
+            'extracted_text': text,
+            'simplified_meaning': ai_response.get('simplified_meaning'),
+            'medicine_instructions': ai_response.get('medicine_instructions', []),
+            'dosage_guide': ai_response.get('dosage_guide', ''),
+            'warnings': ai_response.get('warnings', [])
+        }
+
         return jsonify({
             'success': True,
-            'input_text': text,
-            'simplified_meaning': ai_response.get('simplified_meaning'),
-            'medicine_instructions': ai_response.get('medicine_instructions'),
-            'dosage_guide': ai_response.get('dosage_guide')
+            'analysis': analysis,
+            'input_text': text
         }), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -119,4 +130,12 @@ def analyze_text():
 @medxplain_bp.route('/demo', methods=['GET'])
 def demo():
     """Get demo response for testing."""
-    return jsonify(MOCK_AI_RESPONSES['default']), 200
+    ai_response = MOCK_AI_RESPONSES['default']
+    analysis = {
+        'extracted_text': ai_response.get('extracted_text', ''),
+        'simplified_meaning': ai_response.get('simplified_meaning', ''),
+        'medicine_instructions': ai_response.get('medicine_instructions', []),
+        'dosage_guide': ai_response.get('dosage_guide', ''),
+        'warnings': ai_response.get('warnings', [])
+    }
+    return jsonify({'success': True, 'analysis': analysis}), 200

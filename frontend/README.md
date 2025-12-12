@@ -83,3 +83,4 @@ REACT_APP_API_URL=http://localhost:5000/api
 - ✅ Data visualization with charts
 - ✅ Mobile-friendly design
 - ✅ Medical-themed aesthetics
+- ✅ Chatbot with quick replies, loading indicator, and a **Clear** option to reset the conversation

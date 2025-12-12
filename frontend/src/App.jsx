@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Header from './components/Header';
 import Footer from './components/Footer';
+import Chatbot from './components/Chatbot';
 import Home from './pages/Home';
 import Assessment from './pages/Assessment';
 import Results from './pages/Results';
@@ -29,6 +30,7 @@ export default function App() {
           </Routes>
         </main>
         <Footer />
+        <Chatbot />
       </div>
     </Router>
   );

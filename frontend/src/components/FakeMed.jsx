@@ -6,6 +6,7 @@ export default function FakeMed({ onResult }) {
   const [file, setFile] = useState(null);
   const [fileName, setFileName] = useState('');
   const [previewUrl, setPreviewUrl] = useState('');
+  const fileInputRef = useRef(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [result, setResult] = useState(null);
@@ -128,6 +129,8 @@ export default function FakeMed({ onResult }) {
       if (resp.data.success) {
         setResult(resp.data.analysis);
         if (onResult) onResult(resp.data.analysis);
+        // clear file input value so same file can be selected again
+        try { if (fileInputRef.current) fileInputRef.current.value = null; } catch(_){}
       } else {
         setError(resp.data.error || 'No result');
       }
@@ -136,7 +139,11 @@ export default function FakeMed({ onResult }) {
     } finally { setLoading(false); }
   };
 
-  const reset = () => { if (previewUrl) { try { URL.revokeObjectURL(previewUrl); } catch(e){} } setPreviewUrl(''); setFile(null); setFileName(''); setResult(null); setError(''); };
+  const reset = () => {
+    if (previewUrl) { try { URL.revokeObjectURL(previewUrl); } catch(e){} }
+    try { if (fileInputRef.current) fileInputRef.current.value = null; } catch(_){}
+    setPreviewUrl(''); setFile(null); setFileName(''); setResult(null); setError('');
+  };
   useEffect(() => {
     return () => { if (previewUrl) { try { URL.revokeObjectURL(previewUrl); } catch(e){} } };
   }, [previewUrl]);
@@ -154,7 +161,7 @@ export default function FakeMed({ onResult }) {
 
       {activeTab === 'upload' && (
         <form onSubmit={handleAnalyze} className="space-y-4">
-          <input type="file" accept=".png,.jpg,.jpeg" onChange={handleFileChange} />
+          <input ref={fileInputRef} type="file" accept=".png,.jpg,.jpeg" onChange={handleFileChange} />
           {file && <div className="text-sm">Selected: {fileName}</div>}
           {previewUrl && <div className="mt-3"><img src={previewUrl} alt="preview" className="rounded-md shadow-sm max-h-56 object-contain"/></div>}
           <div className="flex gap-3">
@@ -204,9 +211,14 @@ export default function FakeMed({ onResult }) {
       {result && (
         <div className="mt-4 p-3 border rounded bg-white">
           <div className="font-bold mb-2">Result</div>
-          <div className="text-sm">Fake Detected: {String(result.is_fake)}</div>
-          <div className="text-sm">Confidence: {result.confidence}</div>
+          <div className="text-sm">Fake Detected: <strong>{String(result.is_fake)}</strong></div>
+          <div className="text-sm">Confidence: <strong>{result.confidence_percent || (result.confidence || result.confidence === 0 ? `${result.confidence}` : 'N/A')}</strong></div>
+          {typeof result.width !== 'undefined' && typeof result.height !== 'undefined' && (
+            <div className="text-sm">Image Size: {result.width} x {result.height} px</div>
+          )}
           {result.reasons && result.reasons.length>0 && <div className="text-sm mt-2">Reasons: {result.reasons.join(', ')}</div>}
+          {result.analysis_summary && <div className="text-sm mt-3 text-gray-700">Summary: {result.analysis_summary}</div>}
+          {result.suggested_action && <div className="text-sm mt-2 font-semibold text-primary-700">Suggested Action: {result.suggested_action}</div>}
         </div>
       )}
     </div>

@@ -86,6 +86,25 @@ def upload_image():
         if analysis.get('error'):
             return jsonify({'error': analysis.get('error')}), 500
 
+        # Enrich analysis with a few user-friendly fields
+        try:
+            confidence_pct = None
+            if isinstance(analysis.get('confidence'), (int, float)):
+                confidence_pct = f"{round(float(analysis.get('confidence', 0)) * 100, 1)}%" if analysis.get('confidence') <= 1 else f"{round(float(analysis.get('confidence', 0)),1)}"
+            analysis['confidence_percent'] = confidence_pct
+            # Short summary
+            if analysis.get('is_fake'):
+                summary = 'This item shows signs that may indicate tampering or counterfeit.'
+                suggested = 'Avoid using the product and consult a pharmacist or healthcare professional for confirmation.'
+            else:
+                summary = 'No obvious signs of tampering detected by the demo heuristics.'
+                suggested = 'If in doubt, verify packaging, batch number and expiry date with the manufacturer or pharmacist.'
+            analysis['analysis_summary'] = summary
+            analysis['suggested_action'] = suggested
+        except Exception:
+            # don't fail whole request for enrichment issues
+            pass
+
         return jsonify({
             'success': True,
             'analysis': analysis
@@ -96,5 +115,9 @@ def upload_image():
 
 @fakemed_bp.route('/demo', methods=['GET'])
 def demo():
-    return jsonify({'success': True, 'analysis': {'is_fake': False, 'confidence': 0.88, 'reasons': []}}), 200
+    analysis = {'is_fake': False, 'confidence': 0.88, 'reasons': [], 'width': 800, 'height': 600}
+    analysis['confidence_percent'] = f"{round(analysis['confidence'] * 100, 1)}%"
+    analysis['analysis_summary'] = 'Demo: no obvious tampering detected.'
+    analysis['suggested_action'] = 'This is a demo result. For real checks, upload a clear photo.'
+    return jsonify({'success': True, 'analysis': analysis}), 200
 

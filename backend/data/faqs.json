@@ -1,0 +1,50 @@
+[
+  {
+    "id": "symptom-1",
+    "question": "How does Symptom Prediction work?",
+    "answer": "Symptom Prediction asks for age, gender and a list of symptoms, then uses a risk model to suggest possible conditions. It is an informational guide and not a medical diagnosis. Use it to get suggestions and consult a doctor for confirmation.",
+    "keywords": ["symptom", "prediction", "predict", "disease", "conditions"]
+  },
+  {
+    "id": "symptom-2",
+    "question": "What inputs does Symptom Prediction need?",
+    "answer": "Provide age, gender, and a list of symptoms (fever, cough, etc.). The more accurate your input, the better the suggestions will be.",
+    "keywords": ["inputs", "age", "gender", "symptoms", "how to use symptom prediction"]
+  },
+  {
+    "id": "fakemed-1",
+    "question": "How do I check if a medicine is fake?",
+    "answer": "Use FakeMed to upload a clear photo of the medicine or scan the barcode (if available). The demo uses heuristics to detect tampering signs such as low image quality or unusual packaging — for definitive checks contact your pharmacist.",
+    "keywords": ["fake", "fake medicine", "authenticity", "barcode", "scan", "upload"]
+  },
+  {
+    "id": "fakemed-2",
+    "question": "What should I do if FakeMed flags a medicine?",
+    "answer": "If FakeMed indicates possible tampering or counterfeit, avoid using the product and verify the batch and expiry with a pharmacist or the manufacturer. This tool is a quick demo check and not definitive.",
+    "keywords": ["what to do", "if fake", "action", "report"]
+  },
+  {
+    "id": "medxplain-1",
+    "question": "What is MedXplain?",
+    "answer": "MedXplain simplifies prescription and test report text into easy-to-understand language and explains dosages, why a medicine is prescribed, and common side effects.",
+    "keywords": ["medxplain", "prescription", "simplify", "explain"]
+  },
+  {
+    "id": "medxplain-2",
+    "question": "How do I upload a prescription to MedXplain?",
+    "answer": "Go to MedXplain → Upload or use the camera option to take a clear photo of your prescription. The system will extract text and provide a simplified explanation.",
+    "keywords": ["upload", "prescription", "camera", "medxplain"]
+  },
+  {
+    "id": "memorymate-1",
+    "question": "What can MemoryMate do for me?",
+    "answer": "MemoryMate helps you set medication reminders, track schedules, and receive notifications so you don't miss doses. You can add medicines and set the time and frequency for reminders.",
+    "keywords": ["memorymate", "reminders", "schedule", "medication reminders"]
+  },
+  {
+    "id": "memorymate-2",
+    "question": "How to set up medication reminders in MemoryMate?",
+    "answer": "Open MemoryMate, add a medicine name, dosage and schedule, then enable notifications. You can manage or cancel reminders in your dashboard.",
+    "keywords": ["set up", "reminders", "how to", "setup"]
+  }
+]

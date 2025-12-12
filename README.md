@@ -177,3 +177,25 @@ MIT License - Feel free to use for personal or commercial projects.
 ---
 
 **Built with ❤️ for health**
+
+## 🤖 AI Chatbot (Optional)
+
+You can enable an on-site assistant powered by OpenAI that answers user questions and helps navigate SymptoTwin. Add the following to your backend `.env` file (copy from `.env.example`):
+
+```
+OPENAI_API_KEY=<your-openai-api-key>
+OPENAI_MODEL=gpt-3.5-turbo
+```
+
+Once configured, the frontend will load a floating chatbot icon which opens a helpful assistant. The backend proxies chat messages to the OpenAI Chat Completions API. If no API key is set, the application will return a simple, safe fallback response.
+
+Security & Usage Tips:
+- Treat the OpenAI API key as a secret and never commit it to source control.
+- For production, configure the environment using your hosting provider's secure variables.
+- Keep message sizes reasonable; the app uses a moderate limit for max tokens to avoid high usage costs.
+
+Example API call (curl):
+```
+curl -X POST -H "Content-Type: application/json" -d '{"message": "How do I use SymptoTwin?"}' http://localhost:5000/api/chat
+```
+
